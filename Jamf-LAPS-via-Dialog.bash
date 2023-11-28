@@ -155,7 +155,7 @@ function dialogInstall() {
     else
 
         # Display a so-called "simple" dialog if Team ID fails to validate
-        osascript -e 'display dialog "Please advise your Support Representative of the following error:\r\r• Dialog Team ID verification failed\r\r" with title "Setup Your Mac: Error" buttons {"Close"} with icon caution'
+        osascript -e 'display dialog "Please advise your Support Representative of the following error:\r\r• Dialog Team ID verification failed\r\r" with title "Jamf LAPS via Dialog: Error" buttons {"Close"} with icon caution'
         completionActionOption="Quit"
         exitCode="1"
         quitScript
@@ -171,9 +171,6 @@ function dialogInstall() {
 
 function dialogCheck() {
 
-    # Output Line Number in `verbose` Debug Mode
-    if [[ "${debugMode}" == "verbose" ]]; then updateScriptLog "PRE-FLIGHT CHECK: # # # SETUP YOUR MAC VERBOSE DEBUG MODE: Line No. ${LINENO} # # #" ; fi
-
     # Check for Dialog and install if not found
     if [ ! -e "/Library/Application Support/Dialog/Dialog.app" ]; then
 
@@ -183,16 +180,8 @@ function dialogCheck() {
     else
 
         dialogVersion=$(/usr/local/bin/dialog --version)
-        if [[ "${dialogVersion}" < "${swiftDialogMinimumRequiredVersion}" ]]; then
-            
-            updateScriptLog "PRE-FLIGHT CHECK: swiftDialog version ${dialogVersion} found but swiftDialog ${swiftDialogMinimumRequiredVersion} or newer is required; updating..."
-            dialogInstall
-            
-        else
-
+        
         updateScriptLog "PRE-FLIGHT CHECK: swiftDialog version ${dialogVersion} found; proceeding..."
-
-        fi
     
     fi
 
@@ -465,7 +454,7 @@ startPromptJSON='
     "ontop" : "true",
     "position" : "center",
     "moveable" : true,
-    "titlefont" : "shadow=true, size=36, colour=#FFFDF4",
+    "titlefont" : "shadow=true, size=36",
     "message" : "\n\n '${loggedInUserFirstname}', enter the required information below:",
     "messagefont" : "size=14",
     "textfield" : [
@@ -588,7 +577,7 @@ LAPSPromptJSON='
     "moveable" : true,
     "height" : "700",
     "width" : "900",
-    "titlefont" : "shadow=true, size=36, colour=#FFFDF4",
+    "titlefont" : "shadow=true, size=36",
     "message" : "\n\n ### **Computer Name:** ###  \n '${computerName}'  \n\n ### **Computer Serial:** ###  \n '${computerSerialNumber}'  \n\n ### **Computer IP Address:** ###  \n '${computerIpAddress}'  \n\n ### **Local IP Address** ###  \n '${computerIpAddressLastReported}'  \n\n ### **JSS ID:** ###  \n '${jssID}'  \n\n ### **Management ID:** ###  \n '${managementID}'  \n\n Select the account you want to retrieve a password for from the dropdown below:",
     "messagefont" : "size=14",
 }
@@ -649,7 +638,7 @@ resultsPromptJSON='
     "ontop" : "true",
     "position" : "center",
     "moveable" : true,
-    "titlefont" : "shadow=true, size=36, colour=#FFFDF4",
+    "titlefont" : "shadow=true, size=36",
     "message" : "\n\n **Computer Name:**  \n '${computerName}'  \n\n **Computer Serial:**  \n '${computerSerialNumber}'  \n\n **LAPS User:**  \n '${selectedUser}'  \n\n **Password**  \n '${password}' ",
     "messagefont" : "size=14",
 }
