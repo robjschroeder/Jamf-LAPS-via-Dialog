@@ -13,7 +13,15 @@
 #   - If using a Jamf Pro API Client ID and Secret, the role used should have the following minimum permissions:
 #   -- "View Local Admin Password"
 #   -- "Read Computers"
-#   
+#
+#   Version 1.1.0, 11.29.2023, Robert Schroeder (@robjschroeder)
+#   - Changed the information displayed on the LAPS prompt
+#   - Computer informaiton is now displayed in swift dialog's `list item` option
+#   - OS icons are dynamic and based on the OS version of the computer
+#   - Computer Model icon is dynamic and based on the model of the computer
+#   - Removed Management ID from the LAPS prompt
+#   - Added hyperlink to computer's inventory record in Jamf Pro
+#   - Removed `via Dialog` from title on dialog
 #
 ####################################################################################################
 
@@ -27,7 +35,7 @@
 # Script Version and Jamf Pro API Variables
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-scriptVersion="1.0.0"
+scriptVersion="1.1.0"
 scriptFunctionalName="Jamf LAPS via Dialog"
 export PATH=/usr/bin:/bin:/usr/sbin:/sbin
 
@@ -155,7 +163,7 @@ function dialogInstall() {
     else
 
         # Display a so-called "simple" dialog if Team ID fails to validate
-        osascript -e 'display dialog "Please advise your Support Representative of the following error:\r\r• Dialog Team ID verification failed\r\r" with title "Jamf LAPS via Dialog: Error" buttons {"Close"} with icon caution'
+        osascript -e 'display dialog "Please advise your Support Representative of the following error:\r\r• Dialog Team ID verification failed\r\r" with title "Jamf LAPS: Error" buttons {"Close"} with icon caution'
         completionActionOption="Quit"
         exitCode="1"
         quitScript
@@ -179,8 +187,6 @@ function dialogCheck() {
 
     else
 
-        dialogVersion=$(/usr/local/bin/dialog --version)
-        
         updateScriptLog "PRE-FLIGHT CHECK: swiftDialog version ${dialogVersion} found; proceeding..."
     
     fi
@@ -444,8 +450,8 @@ textfieldJSON=$( echo "${textfieldJSON}" | sed 's/,$//' )
 startPromptJSON='
 {
     "commandfile" : "'"${startPromptCommandFile}"'",
-    "title" : "Jamf LAPS via Dialog",
-    "infobox" : "This tool is designed to help easy retrieval of the LAPS password associated with a Jamf Pro managed computer",
+    "title" : "Jamf LAPS",
+    "infobox" : "This tool is designed to help easy retreival of the LAPS password associated with a Jamf Pro managed computer",
     "icon" : "'"${startIcon}"'",
     "overlayicon" : "'"${overlayicon}"'",
     "iconsize" : "198.0",
@@ -510,21 +516,77 @@ fi
 
 # Get computer information via API
 generalComputerInfo=$( /usr/bin/curl -H "Authorization: Bearer ${bearerToken}" -H "Accept: text/xml" -sfk "${jamfProURL}"/JSSResource/computers/id/"${jssID}/subset/General" -X GET )
+hardwareComputerInfo=$( /usr/bin/curl -H "Authorization: Bearer ${bearerToken}" -H "Accept: text/xml" -sfk "${jamfProURL}"/JSSResource/computers/id/"${jssID}/subset/Hardware" -X GET )
 
 # Parse individual details
 computerName=$( echo "${generalComputerInfo}" | xpath -q -e "/computer/general/name/text()" )
-computerSerialNumber=$( echo "${generalComputerInfo}" | xpath -q -e "/computer/general/serial_number/text()" ) 
+computerSerialNumber=$( echo "${generalComputerInfo}" | xpath -q -e "/computer/general/serial_number/text()" )
+computerModel=$( echo "${hardwareComputerInfo}" | xpath -q -e "/computer/hardware/model/text()" )
+computerOSVersion=$( echo "${hardwareComputerInfo}" | xpath -q -e "/computer/hardware/os_version/text()" )
 computerIpAddress=$( echo "${generalComputerInfo}" | xpath -q -e "/computer/general/ip_address/text()" ) 
 computerIpAddressLastReported=$( echo "${generalComputerInfo}" | xpath -q -e "/computer/general/last_reported_ip/text()" )
 computerInventoryGeneral=$( /usr/bin/curl -H "Authorization: Bearer ${bearerToken}" -s "${jamfProURL}/api/v1/computers-inventory?section=GENERAL&filter=id==${jssID}" -H "accept: application/json" -X GET )
 managementID=$(get_json_value "$computerInventoryGeneral" 'results[0].general.managementId' )
 
+
+
 updateScriptLog "• Name: $computerName"
 updateScriptLog "• Serial Number: $computerSerialNumber"
+updateScriptLog "• Model: $computerModel"
+updateScriptLog "• OS Version: ${computerOSVersion}"
 updateScriptLog "• IP Address: $computerIpAddress"
 updateScriptLog "• IP Address (LR): $computerIpAddressLastReported"
 updateScriptLog "• Server: ${jamfProURL}"
 updateScriptLog "• Computer ID: ${jssID}"
+
+# Get the correct SF symbols based on model
+# CatchAll
+computerModelIcon="SF=laptopcomputer"
+caseModel=$(echo $computerModel | tr '[:upper:]' '[:lower:]')
+# Match the model to a SF icon
+case $caseModel in
+	*"book"*)
+		computerModelIcon="SF=macbook"
+	;;
+	*"imac"*)
+		computerModelIcon="SF=desktopcomputer"
+	;;
+	*"mini"*)
+		computerModelIcon="SF=macmini"
+	;;
+	*"studio"*)
+		computerModelIcon="SF=macstudio"
+	;;
+	*"macpro"*)
+		computerModelIcon="SF=macpro.gen3"
+	;;
+esac
+
+# Determine icon for OS Version
+if [[ "$computerOSVersion" =~ ^10.10.* ]]; then
+	computerOSIcon="https://upload.wikimedia.org/wikipedia/en/a/ae/Osx-yosemite-logo.png"
+elif [[  "$computerOSVersion" =~ ^10.11.* ]]; then
+	computerOSIcon="https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/OS_X_El_Capitan_logo.svg/1024px-OS_X_El_Capitan_logo.svg.png"
+elif [[  "$computerOSVersion" =~ ^10.12.* ]]; then
+	computerOSIcon="https://is1-ssl.mzstatic.com/image/thumb/Purple128/v4/83/99/67/839967c5-d5f8-9c65-44bd-ca7cc3f90a97/ProductPageIcon.png/1200x630bb.png"
+elif [[  "$computerOSVersion" =~ ^10.13.* ]]; then
+	computerOSIcon="https://static.wikia.nocookie.net/ipod/images/e/ec/MacOSHighSierraCircle.png/revision/latest?cb=20170927214102"
+elif [[  "$computerOSVersion" =~ ^10.14.* ]]; then
+	computerOSIcon="https://upload.wikimedia.org/wikipedia/it/thumb/5/5b/MacOS_Mojave_logo.png/600px-MacOS_Mojave_logo.png"
+elif [[  "$computerOSVersion" =~ ^10.15.* ]]; then
+	computerOSIcon="https://support.apple.com/library/APPLE/APPLECARE_ALLGEOS/SP803/macos-catalina-roundel-240.png"
+elif [[  "$computerOSVersion" =~ ^11.* ]]; then
+	computerOSIcon="https://upload.wikimedia.org/wikipedia/it/0/0f/MacOS_Big_Sur_logo.png"
+elif [[  "$computerOSVersion" =~ ^12.* ]]; then
+	computerOSIcon="https://upload.wikimedia.org/wikipedia/commons/c/c8/MacOS_Monterey_logo.png"
+elif [[  "$computerOSVersion" =~ ^13.* ]]; then
+	computerOSIcon="https://upload.wikimedia.org/wikipedia/commons/c/c8/MacOS_Monterey_logo.png"
+elif [[  "$computerOSVersion" =~ ^14.* ]]; then
+	computerOSIcon="https://cdn.jim-nielsen.com/macos/512/macos-sonoma-2023-09-26.png"
+else
+	computerOSIcon="SF=apple.logo"
+fi
+
 
 # Get the LAPS accounts
 accountInfo=$( curl -X 'GET' \
@@ -550,6 +612,7 @@ done
 # Additional formatting
 sortedUniquelapsUsernames=($(echo "${lapsUsernames[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' '))
 lapsUsersString=$( echo "${sortedUniquelapsUsernames[@]}" | sed 's/.*/"&"/' | sed 's/\ /",\ "/g' )
+computerJSSLink="[${computerName}](${jamfProURL}/computers.html?id=${jssID}&o=r})"
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # LAPS Prompt
@@ -558,7 +621,7 @@ lapsUsersString=$( echo "${sortedUniquelapsUsernames[@]}" | sed 's/.*/"&"/' | se
 LAPSPromptJSON='
 {
     "commandfile" : "'"${LAPSPromptCommandFile}"'",
-    "title" : "Jamf LAPS via Dialog",
+    "title" : "Jamf LAPS",
     "icon" : "'"${startIcon}"'",
     "overlayicon" : "'"${overlayicon}"'",
     "iconsize" : "198.0",
@@ -575,11 +638,19 @@ LAPSPromptJSON='
     "ontop" : "true",
     "position" : "center",
     "moveable" : true,
-    "height" : "700",
+    "height" : "600",
     "width" : "900",
-    "titlefont" : "shadow=true, size=36",
-    "message" : "\n\n ### **Computer Name:** ###  \n '${computerName}'  \n\n ### **Computer Serial:** ###  \n '${computerSerialNumber}'  \n\n ### **Computer IP Address:** ###  \n '${computerIpAddress}'  \n\n ### **Local IP Address** ###  \n '${computerIpAddressLastReported}'  \n\n ### **JSS ID:** ###  \n '${jssID}'  \n\n ### **Management ID:** ###  \n '${managementID}'  \n\n Select the account you want to retrieve a password for from the dropdown below:",
     "messagefont" : "size=14",
+    "message" : "  \n Review the following informaiton before selecting a LAPS account from the drop down below.  \n\n For more details, view the computer record in Jamf Pro: '"${computerJSSLink}"'",
+    "titlefont" : "shadow=true, size=36",
+    "listitem" : [
+        {"title" : "Computer Name", "icon" : "SF=pencil", "statustext" : "'"${computerName}"'"},
+        {"title" : "Computer Serial", "icon" : "SF=ellipsis.rectangle, size=14", "statustext" : "'"${computerSerialNumber}"'"},
+        {"title" : "Computer Model", "icon" : "'"${computerModelIcon}"'", "statustext" : "'"${computerModel}"'"},
+        {"title" : "OS Version", "icon" : "'"${computerOSIcon}"'", "statustext" : "'"${computerOSVersion}"'"},
+        {"title" : "Computer IP Address", "icon" : "SF=network.badge.shield.half.filled", "statustext" : "'"${computerIpAddress}"'"},
+        {"title" : "Computer Local IP Address", "icon" : "SF=network", "statustext" : "'"${computerIpAddressLastReported}"'"}
+    ]
 }
 '
 
@@ -630,7 +701,7 @@ resultsCommandFile=$( mktemp -u /var/tmp/dialogCommandFileResults.XXX )
 resultsPromptJSON='
 {
     "commandfile" : "'"${resultsCommandFile}"'",
-    "title" : "Jamf LAPS via Dialog",
+    "title" : "Jamf LAPS",
     "icon" : "'"${startIcon}"'",
     "overlayicon" : "'"${overlayicon}"'",
     "iconsize" : "198.0",
