@@ -445,7 +445,7 @@ startPromptJSON='
 {
     "commandfile" : "'"${startPromptCommandFile}"'",
     "title" : "Jamf LAPS via Dialog",
-    "infobox" : "This tool is designed to help easy retreival of the LAPS password associated with a Jamf Pro managed computer",
+    "infobox" : "This tool is designed to help easy retrieval of the LAPS password associated with a Jamf Pro managed computer",
     "icon" : "'"${startIcon}"'",
     "overlayicon" : "'"${overlayicon}"'",
     "iconsize" : "198.0",
