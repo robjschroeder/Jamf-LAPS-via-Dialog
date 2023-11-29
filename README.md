@@ -15,7 +15,8 @@ The dialog screen will ask only for items that are required.
 <img width="932" alt="Screenshot 2023-11-28 at 3 16 11 PM" src="https://github.com/robjschroeder/Jamf-LAPS-via-Dialog/assets/23343243/46a1ba82-27fd-4214-b72b-4326f91ecd34">
 
 <br>After inputing the required information and clicking 'Continue', the script will use the Jamf Pro API to gather some additional information on the computer. You will be asked which account that you are looking to get the password for.
-<img width="1012" alt="Screenshot 2023-11-28 at 3 18 33 PM" src="https://github.com/robjschroeder/Jamf-LAPS-via-Dialog/assets/23343243/627153ff-8f4e-4e59-b4fe-79ddbb431b6f">
+![Screenshot 2023-11-29 at 2 54 26 PM](https://github.com/robjschroeder/Jamf-LAPS-via-Dialog/assets/23343243/f9daf152-36c5-405a-90d5-7ba8ba3455e9)
+
 
 <br>Finally you will be presented with the selected user's password. 
 <img width="932" alt="Screenshot 2023-11-28 at 3 18 40 PM" src="https://github.com/robjschroeder/Jamf-LAPS-via-Dialog/assets/23343243/2cc137e4-40cb-43a2-81ec-51ffa6dc123f">
