@@ -20,6 +20,6 @@ The dialog screen will ask only for items that are required.
 
 
 # Why Build This
-After reviewing Mark Buffington and Rob Potvin's JNUC 2023 presentation on Jamf Pro LAPS, and having recent issues that required administrator credentials to resolve (all users in our organization do not have local administrative rights), I noticed that I needed a way to pull administrator passwords easily. Also, I love all things swiftDialog so why not have a dialog available to get this informaiton. This tool can then be made available to all support staff that may need to get administrator credentials for hands-on work. Security is then increased by auto-rotating the password after a certain amount of time after it has been viewed. 
+After reviewing Mark Buffington and Rob Potvin's JNUC 2023 presentation on Jamf Pro LAPS, and having recent issues that required administrator credentials to resolve (all users in our organization do not have local administrative rights), I noticed that I needed a way to pull administrator passwords easily. Also, I love all things swiftDialog so why not have a dialog available to get this information. This tool can then be made available to all support staff that may need to get administrator credentials for hands-on work. Security is then increased by auto-rotating the password after a certain amount of time after it has been viewed. 
 
 # Usage
