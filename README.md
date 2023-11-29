@@ -3,6 +3,8 @@ Retrieve LAPS information in Jamf Pro via swiftDialog
 
 This script will provide a user interface for retrieving the LAPS password associated with a Jamf Pro managed computer. This script can be ran locally or made availabe in Self Service. 
 
+Big shoutout to @dan-snelson for his blog post: https://snelson.us/2023/08/jamf-pro-laps-retrieving-password-via-terminal/
+
 # Screenshots
 Jamf LAPS via Dialog:
 
